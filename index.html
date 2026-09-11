@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>App Store Review Sentiment Tracker</title>
+<meta property="og:url" content="https://amos-mig.github.io/app-store-review-sentiment-tracker-demo/">
+<style>
+:root{--bg:#0b0d12;--pn:#14171f;--bd:#262b36;--tx:#e8eaf0;--mu:#9aa3b2;--ac:#10b981;--ng:#ef4444}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:14.5px/1.55 ui-monospace,Menlo,Consolas,monospace}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 40px}
+.ban{background:var(--ac);color:#04231a;font-weight:700;font-size:12.5px;padding:7px 16px;text-align:center}
+h1{font-size:clamp(22px,4.6vw,31px);margin:0 0 8px;letter-spacing:-.5px}
+header{margin:28px 0 0}
+.a{color:var(--ac)}
+.sub{color:var(--mu);max-width:680px}
+h2{font-size:13px;margin:36px 0 12px;color:var(--mu);text-transform:uppercase;letter-spacing:2px}
+.p{background:var(--pn);border:1px solid var(--bd);border-radius:10px;padding:16px}
+.demo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.lab{font-size:11px;letter-spacing:1px;color:var(--mu);margin-bottom:10px}
+textarea{width:100%;height:128px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--tx);padding:10px;font:inherit;resize:vertical}
+textarea:focus{outline:1px solid var(--ac)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}
+.chip{background:var(--bg);border:1px solid var(--bd);color:var(--mu);border-radius:999px;padding:4px 11px;font:inherit;font-size:12px;cursor:pointer}
+.chip:hover{border-color:var(--ac);color:var(--tx)}
+.btn{display:inline-block;background:var(--ac);color:#04231a;border:0;border-radius:6px;padding:10px 18px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.12)}
+.big{font-size:25px;font-weight:700;margin-bottom:8px}
+.bar{position:relative;height:10px;background:var(--bg);border:1px solid var(--bd);border-radius:5px;margin:4px 0 10px;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0;transition:all .3s}
+.meta{color:var(--mu);font-size:12.5px;margin-bottom:10px}
+.hl{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:10px;font-size:13px;min-height:58px}
+.pos,.flip{color:var(--ac);font-weight:700}
+.flip{background:rgba(16,185,129,.14);border-radius:3px;padding:0 2px}
+.neg{color:var(--ng);font-weight:700}
+.negw{color:var(--ng)}
+.note{font-size:11.5px;margin-top:10px;color:var(--mu)}
+.m{color:var(--mu)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card h3{font-size:13.5px;margin-bottom:6px}
+.card p{color:var(--mu);font-size:12.5px}
+.lock{border-style:dashed}
+.tag{font-size:10.5px;letter-spacing:1px;color:var(--mu);text-transform:uppercase;margin-top:9px}
+.ok{color:var(--ac)}
+.pre{overflow-x:auto;font-size:12.5px;color:var(--mu);line-height:1.75;margin-bottom:18px}
+.cta{font-size:15px;padding:13px 22px}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--bd);margin-top:44px;padding:18px 0 0;color:var(--mu);font-size:12.5px}
+footer a{color:var(--mu)}
+@media(max-width:860px){.demo{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="ban">Live demo — scores pasted reviews right here in your browser; it does not pull live App Store data. The full product does more ↓</div>
+<main class="wrap">
+<header>
+<h1 data-title="App Store Review Sentiment Tracker">App Store Review <span class="a">Sentiment</span> Tracker</h1>
+<p class="sub">Pulls reviews for your apps and your competitors', scores sentiment, and clusters recurring complaints into a ranked fix-next list. Below is the scoring core, running for real in your browser.</p>
+</header>
+<section class="demo">
+<div class="p">
+<div class="lab">REVIEW INPUT — paste any app store review</div>
+<textarea id="ta" placeholder="e.g. Crashes every time I open the export screen…"></textarea>
+<div class="chips">
+<button class="chip" onclick="setR(0)">crash complaint</button>
+<button class="chip" onclick="setR(1)">feature request</button>
+<button class="chip" onclick="setR(2)">pricing rant</button>
+<button class="chip" onclick="setR(3)">rave review</button>
+</div>
+<button class="btn" onclick="run()">Score review →</button>
+</div>
+<div class="p">
+<div class="lab">RESULT · SIMULATED RESPONSE · 200 OK</div>
+<div id="score" class="big"></div>
+<div class="bar"><i id="fill"></i></div>
+<div id="meta" class="meta"></div>
+<div id="hl" class="hl"></div>
+<div class="note">Preview runs a ~60-word lexicon with negation + intensifier handling, 0 network calls. The full kit applies a tuned model to 500+ live reviews per run, server-side.</div>
+</div>
+</section>
+<section>
+<h2>What's in the kit</h2>
+<div class="cards">
+<div class="p card"><h3>✓ Scoring core — live above</h3><p>Every review scored −1…+1 with a predicted star rating; negated and intensified phrases handled correctly.</p><div class="tag ok">you just used it</div></div>
+<div class="p card"><h3>✓ Single Python file + exports</h3><p>Stdlib only, nothing to babysit. One command → CSV/JSON report you can drop into a ticket or a deck.</p><div class="tag ok">in kit</div></div>
+<div class="p card lock"><h3>🔒 Live pulls + dedupe</h3><p>Fetches reviews across versions, countries and competitors' apps, then deduplicates automatically.</p><div class="tag">in the full kit</div></div>
+<div class="p card lock"><h3>🔒 Per-release trend lines</h3><p>Sentiment trend per app version — see exactly which release moved users, for better or worse.</p><div class="tag">in the full kit</div></div>
+<div class="p card lock"><h3>🔒 Complaint clustering</h3><p>Groups hundreds of scattered reviews into ranked themes with counts, trends and sample quotes.</p><div class="tag">in the full kit</div></div>
+</div>
+</section>
+<section>
+<h2>How you'd run it</h2>
+<pre class="p">$ python asrt.py fetch --app com.yourapp.prod --rivals com.rival.app
+    fetched 512 reviews (us · gb · de)  →  487 unique after cross-version dedupe
+$ python asrt.py report --since 3.4.0 --format csv
+    clustered 487 reviews into 14 themes  →  fix_next.csv
+      1  crashes on launch since 3.4     61 reviews   ▲ was 38 in 3.3
+      2  "please add iPad support"       44 reviews   ▲ climbing
+      3  paywall too aggressive          27 reviews   = stable
+$ python asrt.py export --json           # CSV + JSON · single file, ~15 of 300+ lines shown</pre>
+<a class="btn cta" href="https://amosmign.gumroad.com/l/app-store-review-sentiment-tracker">Get the full tracker · 29</a>
+<p class="m note">One-time purchase · single Python file · CSV/JSON export · competitor tracking included</p>
+</section>
+<footer>
+<span>App Store Review Sentiment Tracker</span>
+<span><a href="https://kits.amosmignery.dev">kits.amosmignery.dev</a> · <a href="https://github.com/Amos-Mig/app-store-review-sentiment-tracker-demo">GitHub</a> · <a href="https://amosmign.gumroad.com/l/app-store-review-sentiment-tracker">Get it · 29</a></span>
+</footer>
+</main>
+<script>
+var POS={love:2,great:2,amazing:3,awesome:3,perfect:3,fast:2,smooth:2,helpful:2,easy:1,intuitive:2,best:3,excellent:3,good:1,clean:2,reliable:2,brilliant:3,fantastic:3,nice:1,useful:2},
+NEG={crash:-3,crashes:-3,crashed:-3,crashing:-3,freeze:-2,freezes:-2,freezing:-2,slow:-2,lag:-2,lags:-2,laggy:-2,bug:-2,bugs:-2,buggy:-2,broken:-3,terrible:-3,awful:-3,hate:-3,waste:-3,annoying:-2,expensive:-2,confusing:-2,ugly:-2,useless:-3,worst:-3,sucks:-3,disappointed:-2,disappointing:-2,frustrating:-2,paywall:-2,relentless:-1,lost:-2,loses:-2},
+NOT=['not','never','no','nothing','dont','doesnt','didnt','isnt','wasnt','cant','wont','cannot','hardly'],
+AMP=['very','really','so','super','extremely','way','absolutely','totally'],
+CL=[['Crashes & stability',['crash','crashes','crashed','crashing','freeze','freezes','freezing','bug','bugs','buggy','broken','lost','loses']],['Performance & battery',['slow','lag','laggy','lags','battery','drain','drains','heat','overheats','fast']],['Feature requests',['please','add','wish','suggest','hope','missing','need','support','request']],['Pricing & monetization',['price','expensive','pay','subscription','refund','ads','paywall','free','worth']],['Design & UX',['ui','design','layout','theme','ugly','confusing','dark','button','icons']]],
+PRE=['App keeps crashing since the 3.4 update — it loses my drafts every single time. Really frustrating.','Love the new dark mode, so smooth and intuitive. Please add iPad support next!','Way too expensive for what it does, and the ads are relentless.','Honestly the best finance app out there — fast, clean, never buggy.'];
+function esc(s){return s.replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
+function setR(i){document.getElementById('ta').value=PRE[i];run()}
+function run(){
+var ta=document.getElementById('ta'),raw=ta.value.trim(),hl=document.getElementById('hl'),sc=document.getElementById('score'),meta=document.getElementById('meta'),fill=document.getElementById('fill');
+if(!raw){sc.innerHTML='<span class="m">—</span>';meta.textContent='paste a review or tap a preset above';fill.style.width='0';hl.innerHTML='<span class="m">output appears here…</span>';return}
+var t0=performance.now(),parts=raw.split(/([A-Za-z']+)/),pos=0,neg=0,hits=0,negD=0,ampD=0,h='',cl={},i,w;
+for(i=0;i<parts.length;i++){w=parts[i];if(!w)continue;
+if(i%2){var lo=w.toLowerCase().replace(/'/g,''),base=POS[lo]!==undefined?POS[lo]:(NEG[lo]||0),cls='',v=0;
+if(base){v=base*(negD?-1:1)*(ampD?1.6:1);hits++;cls=negD?'flip':(v>0?'pos':'neg');if(v>0)pos+=v;else neg-=v}
+else if(NOT.indexOf(lo)>=0){negD=3;cls='negw'}
+else if(AMP.indexOf(lo)>=0){ampD=2}
+for(var c=0;c<CL.length;c++){if(CL[c][1].indexOf(lo)>=0)cl[CL[c][0]]=(cl[CL[c][0]]||0)+1}
+h+=cls?'<span class="'+cls+'">'+esc(w)+'</span>':esc(w);
+if(negD)negD--;if(ampD)ampD--;
+}else h+=esc(w).replace(/\n/g,'<br>');
+}
+var tot=pos+neg,s=tot?(pos-neg)/tot:0;if(s>1)s=1;if(s<-1)s=-1;
+var word=hits===0?'no sentiment signals':s>=.6?'very positive':s>=.2?'positive':s>-.2?'mixed / neutral':s>-.6?'negative':'very negative';
+var col=hits===0?'var(--mu)':s>0?'var(--ac)':'var(--ng)';
+var n=hits===0?0:(s>=.6?5:s>=.2?4:s>-.2?3:s>-.6?2:1),st='★★★★★'.substr(0,n)+'☆☆☆☆☆'.substr(0,5-n);
+var best=null,bn=0,k;for(k in cl){if(cl[k]>bn){bn=cl[k];best=k}}
+if(best===null||bn<2)best=s>.15?'General praise':s<-.15?'General complaints':'Mixed / uncategorized';
+var ms=(performance.now()-t0).toFixed(2);
+sc.innerHTML='<span style="color:'+col+'">'+(s>0?'+':'')+s.toFixed(2)+'</span> <span class="m" style="font-size:14px">· '+word+'</span>';
+if(s>=0){fill.style.left='50%';fill.style.width=(s*50)+'%';fill.style.background='var(--ac)'}
+else{fill.style.left=(50+s*50)+'%';fill.style.width=(-s*50)+'%';fill.style.background='var(--ng)'}
+meta.textContent='predicted '+st+' ('+n+'/5) · theme: '+best+' · '+hits+' sentiment hits · scored in '+ms+' ms · 0 network calls';
+hl.innerHTML=h;
+}
+setR(0);
+</script>
+</body>
+</html>
